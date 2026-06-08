@@ -1,5 +1,4 @@
-Dining Hall Name: Niche - Stanford University Campus Life Polls
-Address: niche.com/colleges/stanford-university/campus-life/
+Title: Niche - Stanford University Campus Life Polls
 Overall Rating: 4.0
 Total Reviews: 154
 

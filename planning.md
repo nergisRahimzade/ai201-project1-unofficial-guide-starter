@@ -42,12 +42,15 @@ I chose the domain of student reviews of dining halls at Stanford University. I 
      numbers fit the structure of your documents.
      A review-heavy corpus warrants different chunking than a long FAQ. -->
 
-**Chunk size:*400 tokens*
+**Chunk size:*400 tokens* -> Changed to 256
 
-**Overlap:*80 tokens*
+**Overlap:*80 tokens* -> Changed to 51
 
-**Reasoning:*Since the sources in this project are mostly reviews, chunk size of 400 tokens and overlap size of 80 (20% of chunk size) will be big enough to capture the context of each review and small enough to catch the details without a lot of repetition.*
+**Reasoning:*
+     Since the sources in this project are mostly reviews, chunk size of 400 tokens and overlap size of 80 (20% of chunk size) will be big enough to capture the context of each review and small enough to catch the details without a lot of repetition.
 
+     Changed the chunk size to 256 because the model I chose for embedding, all-MiniLM-L6-v2, has a maximum input length of 256 tokens. Chunks longer than 256 tokens would get truncated, meaning if I gave the model a chunk of 400 tokens, the tokens between 257 and 400 would be deleted and worse not appended to the next chunk. Which means they would be lost. This could have created misinformation, hallucination due to missing information and bad performance that wouldn't have given the user an accurate result. So, chunk size was changed to 256 to present the user a better result. Therefore, the overlap size was also changed to 50 (~20%) to match with the new chunk size.
+*
 ---
 
 ## Retrieval Approach
