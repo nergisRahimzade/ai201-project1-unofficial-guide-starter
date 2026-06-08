@@ -5,8 +5,8 @@ import json
 # --- Config ---
 SOURCES_DIR = "sources"
 OUTPUT_FILE = "documents/chunks.jsonl"
-CHUNK_SIZE = 400
-CHUNK_OVERLAP = 80
+CHUNK_SIZE = 256
+CHUNK_OVERLAP = 50
 
 # --- Load ---
 def load_documents(sources_dir):

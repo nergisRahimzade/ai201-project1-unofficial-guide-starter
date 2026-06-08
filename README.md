@@ -146,12 +146,22 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
 
 **Instance 1**
 
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
+- *What I gave the AI: @sources/  @planning.md  
+Use these sections of planning.md and sources folder as a reference when executing the task below: Documents, Chunking Strategy, Architecture.
+
+Task:  Implement a script that loads my documents, cleans them and produces chunks matching to my specified chunk size and overlap.*
+- *What it produced: A very complicated and detailed code including loading, cleaning and chunking functions. But every function was unnecessarily complicated. And since I already had my sources files formatted and cleaned before starting Milestone 3, I used Claude again to simplify the code and focus on writing the simplest code possible for my application to work faster and cleaner.*
+- *What I changed or overrode: Simplified the code by removing unnecessary complexity and focusing on the essential functionality.*
 
 **Instance 2**
 
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
+- *What I gave the AI: @documents/chunks.jsonl  @sources/ @planning.md  @scripts/ingest_and_chunk.py 
+
+Use Retrieval Approach, Architecture section of planning.md to execute the task below.
+
+Task:  Implement the embedding step (load chunks from my ingestion pipeline, embedding with all-MiniLM-L6-v2, store in ChromaDB with source metadata), and write a retrieval function.
+
+Explain everything you did in detail and why you did it to me at the end of your response, please.
+*
+- *What it produced: A simple embedding and retrieval pipeline using all-MiniLM-L6-v2 and ChromaDB*
+- *What I changed or overrode: Honestly, I didn't change or override anything after testing with a question. The results were good enough to give the user an accurate results.*
