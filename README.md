@@ -41,13 +41,13 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
      - Any preprocessing you did before chunking (e.g., stripping HTML, removing headers)
      - What your final chunk count was across all documents -->
 
-**Chunk size:**
+**Chunk size:** 256 characters. The initial spec planned for 400, but this was revised to match the maximum input length of the `all-MiniLM-L6-v2` embedding model. Chunks longer than 256 tokens would be silently truncated by the model, causing the tail of each chunk to be lost entirely — not carried into the next chunk — which could introduce hallucinations or missing context in retrieval.
 
-**Overlap:**
+**Overlap:** 50 characters (~20% of chunk size). Carried over proportionally from the original 80-character overlap planned for 400-character chunks. This is enough to prevent important sentences from being split clean across a boundary, without producing excessive redundancy across adjacent chunks.
 
-**Why these choices fit your documents:**
+**Why these choices fit your documents:** The context is mostly short, self-contained reviews (Yelp, Reddit, Niche). A 256-character chunk captures one to two review sentences cleanly. Preprocessing strips extra whitespace and collapses repeated blank lines (`clean_text()` in `ingest_and_chunk.py`) but no HTML stripping was needed since all sources were pre-saved as plain text. URL files (`*_url.txt`) are excluded during ingestion and stored as chunk metadata instead.
 
-**Final chunk count:**
+**Final chunk count:** 158 chunks across all 12 source documents.
 
 ---
 
@@ -59,9 +59,9 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
      Consider: context length limits, multilingual support, accuracy on domain-specific text,
      latency, and local vs. API-hosted. -->
 
-**Model used:**
+**Model used:** `all-MiniLM-L6-v2` via `sentence-transformers`, stored in a local ChromaDB persistent vector store with cosine similarity.
 
-**Production tradeoff reflection:**
+**Production tradeoff reflection:** The main tradeoff worth weighing for a real deployment would be multilingual support. Stanford's student body has substantial international diversity, and students may search in their first language or use transliterated food terms (e.g., "dal", "pho", "banh mi"). `all-MiniLM-L6-v2` is English-only and would fail to match cross-lingual queries. A model like `paraphrase-multilingual-MiniLM-L12-v2` or OpenAI's `text-embedding-3-small` (API-hosted) would handle this better, at the cost of slightly higher latency or per-query API costs. 
 
 ---
 
@@ -74,9 +74,9 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
      Do not just say "I told it to use the documents" — show the actual instruction or explain
      the mechanism. -->
 
-**System prompt grounding instruction:**
+**System prompt grounding instruction:** The system prompt explicitly instructs the model: `"ONLY use the retrieved context when answering questions."` It also includes: `"If the user asks you a question which is not related to Stanford dining halls or information about them, say 'Sorry, I can only answer questions related to Stanford dining halls.'"` This creates a two-layer guard — the model is told to stay within the retrieved context, and to reject queries that fall outside the domain entirely.
 
-**How source attribution is surfaced in the response:**
+**How source attribution is surfaced in the response:** The prompt instructs the model to end every answer with a bullet list of citations, each including the source filename and URL if available. The context itself is pre-formatted by `format_context()` in `generate_and_interface.py`, which prepends each chunk with a numbered header: `[N] Source: <filename> (<url>)`. This gives the model explicit, structured attribution labels to reference in its citations.
 
 ---
 
@@ -88,11 +88,11 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
 
 | # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
 |---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | Which dining hall provides halal food around 8–10 pm? | Lakeside Dining is the most reliable option for halal-compatible food close to the 8–10 PM window | Could not identify a specific dining hall; stated no explicit halal information was in the retrieved chunks. Retrieved Stern, Spoon University, and Stanford Daily chunks instead of the official dining page that contains the halal guidance | Off-target | Inaccurate |
+| 2 | Which dining hall has the least wait time during lunch that also serves Indian food? | FloMo is the best for Indian food; sources lack direct lunch wait-time comparisons | Correctly noted Stern has faster lines but serves Mexican food; confused Late Night at Lakeside with FloMo for Indian food; could not answer the compound question | Partially relevant | Partially accurate |
+| 3 | Which dining hall provides food for Suhoor in Ramadan? | Wilbur Dining and Lakeside Dining both provide Suhoor meal options during Ramadan | Returned "Sorry, I can only answer questions related to Stanford dining halls" — the off-topic guard fired because no retrieved chunk was relevant enough, so the model concluded the question was out of scope | Off-target | Inaccurate |
+| 4 | Which dining hall has the best vegetarian food? | FloMo for diverse vegetarian/Indian options; Stern praised by vegetarians specifically | Identified Gerhard Casper based on a roasted vegetables mention; noted Wilbur's poor vegetarian options. A valid partial answer but missed FloMo and Stern as the stronger candidates | Partially relevant | Partially accurate |
+| 5 | Which dining hall allows take outs? | No official takeout policy for cooked food; fruit is allowed; students informally use own containers | Correctly explained that takeout containers were phased out, plates can be taken outside but must be returned, and students use personal containers informally. Accurate and well-cited | Relevant | Accurate |
 
 **Retrieval quality:** Relevant / Partially relevant / Off-target  
 **Response accuracy:** Accurate / Partially accurate / Inaccurate
@@ -112,13 +112,13 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
      "The embedding model treated the professor's nickname as out-of-vocabulary and returned
      results from an unrelated review" is an explanation. -->
 
-**Question that failed:**
+**Question that failed:** "Which dining hall provides food for Suhoor in Ramadan?"
 
-**What the system returned:**
+**What the system returned:** `"Sorry, I can only answer questions related to Stanford dining halls."` — the system's off-topic guard fired and refused to answer entirely, despite the question being directly relevant to dining.
 
-**Root cause (tied to a specific pipeline stage):**
+**Root cause (tied to a specific pipeline stage):** The failure originates in the **embedding and retrieval stage**. The word "Suhoor" (the pre-dawn Ramadan meal) is a transliterated Arabic term that does not appear in any of the source documents. `all-MiniLM-L6-v2` is an English-only model, so it has no semantic representation for this term and instead retrieves chunks based on superficial similarity — returning unrelated dining hall review fragments. With no relevant context in the top-5 chunks, the LLM correctly detected that none of the retrieved chunks were useful, but then incorrectly concluded the question was off-topic and triggered the refusal instruction rather than acknowledging a retrieval gap.
 
-**What you would change to fix it:**
+**What you would change to fix it:** Two fixes would help. First, add query expansion or synonym mapping at the retrieval stage — translating "Suhoor" to "pre-dawn meal", "early morning food", or "Ramadan breakfast" before embedding, so the model can retrieve the relevant official dining content. Second, revise the system prompt to distinguish between "the retrieved context doesn't cover this" (which should produce a "I couldn't find information on that" response) versus "this question is not about Stanford dining" (which should produce the refusal). Currently both cases collapse into the same refusal response.
 
 ---
 
@@ -127,9 +127,9 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
 <!-- Reflect on how planning.md shaped your implementation.
      Answer both questions with at least 2–3 sentences each. -->
 
-**One way the spec helped you during implementation:**
+**One way the spec helped you during implementation:** The Chunking Strategy section forced an early decision about chunk size relative to the embedding model's context window. Writing it down before implementation revealed the mismatch between the originally planned 400-character chunks and `all-MiniLM-L6-v2`'s 256-token limit. Without the spec, this would likely have been discovered only after seeing degraded retrieval quality, wasting time debugging a silent truncation issue.
 
-**One way your implementation diverged from the spec, and why:**
+**One way your implementation diverged from the spec, and why:** The architecture diagram in planning.md listed `RecursiveCharacterTextSplitter` (a LangChain utility) as the chunking tool, but the final implementation uses a plain Python sliding-window loop in `ingest_and_chunk.py`. This divergence was intentional — after the first AI-generated code used LangChain and produced unnecessarily complex scaffolding, the chunking logic was rewritten from scratch to keep the codebase minimal and dependency-light, since the fixed-size character split is simple enough to implement directly without a framework.
 
 ---
 

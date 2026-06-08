@@ -1,7 +1,7 @@
 # Project 1 Planning: The Unofficial Guide
 
 > Write this document before you write any pipeline code.
-> Your spec and architecture diagram are what you'll use to direct AI tools (Claude, Copilot, etc.) to generate your implementation — the more specific they are, the more useful the generated code will be.
+> Your spec and architecture diagram are what you'll use to direct AI tools (Claude, Claude Code, etc.) to generate your implementation — the more specific they are, the more useful the generated code will be.
 > Update the Retrieval Approach and Chunking Strategy sections if you change your approach during implementation.
 > Update this file before starting any stretch features.
 
@@ -79,15 +79,16 @@ I chose the domain of student reviews of dining halls at Stanford University. I 
 | #   | Question                                                                             | Expected answer                                                                                                                                                                                                                            |
 | --- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Which dining hall provide halal food around 8-10 pm?                                 | Lakeside Dining is the most reliable option if you're specifically looking for halal-compatible food availability close to the 8–10 PM window.                                                                                             |
-| 2   | Which dining hall has the least wait time during lunch that also serves Indian food? | FloMo is the best option for Indian food, though the sources don't directly compare lunch wait times across halls. The sources don't have enough data to definitively answer the "least wait time" part — this is worth flagging as a gap. |
+| 2   |Which dining hall has the least wait time during lunch that also serves Indian food? | Regardless of dining hall, lunch crowds are usually highest around 12:00–1:00 PM, when classes break. Student discussions at other universities with similar dining patterns consistently report significantly shorter waits before noon or after 1 PM|
 | 3   | Which dining hall provide food for Sahoor in Ramadan?                                | Stanford explicitly lists:
 Wilbur Dining
 Lakeside Dining
 
 Both provide build-your-own Suhoor meals/boxes during Ramadan. Lakeside additionally offers late-night pickup opportunities through its Late Night Kitchen. |
-| 4 | Which dining hall has the best quality vegan food?| Most likely: Gerhard Dining (because of Lemongrass Kitchen).
-
-Stanford also notes that all dining halls provide extensive vegan options and that the dining program has received strong recognition for vegan dining overall.|
+| 4 | Which dining hall has the best vegetarian food?| For a vegetarian student eating regularly on campus:
+FloMo is probably the safest choice if you enjoy diverse vegetarian meals, especially Indian food and fresh produce.
+Arbuckle is often considered the highest-quality dining venue overall.
+Stern gets some of the strongest praise from vegetarian students specifically.|
 | 5 | Which dining hall allows take outs?| No dining hall currently has an official takeout policy for cooked food. Fruit can be taken out. Students work around this by bringing their own containers, but this is informal, not an official service any specific dining hall offers.|
 
 ---
@@ -127,7 +128,7 @@ Stanford also notes that all dining halls provide extensive vegan options and th
 ## AI Tool Plan
 
 <!-- For each part of the pipeline below, describe:
-     - Which AI tool you plan to use (Claude, Copilot, ChatGPT, etc.)
+     - Which AI tool you plan to use (Claude, Claude Code, ChatGPT, etc.)
      - What you'll give it as input (which sections of this planning.md, which requirements)
      - What you expect it to produce
      - How you'll verify the output matches your spec
@@ -137,13 +138,13 @@ Stanford also notes that all dining halls provide extensive vegan options and th
      with my specified chunk size and overlap" is a plan. -->
 
 **Milestone 3 — Ingestion and chunking:*
-     I will use Copilot to help me code Ingestion using the content in my sources folder. For Chunking, I will use Copilot to implement chunking using the RecursiveCharacterTextSplitter from Langchain, by giving the details of my chunking strategy from the Chunking Strategy section of planning.md. I expect it to produce a function or use a pre-built function that chunks the context using information in sources folder. I will verify the output by testing the function on a sample document and see if the output chunks are of the expected size and overlap as well as checking if I need to change the details of Chunking Strategy based on the output Copilot provides.
+     I will use Claude Code to help me code Ingestion using the content in my sources folder. For Chunking, I will use Claude Code to implement chunking using the RecursiveCharacterTextSplitter from Langchain, by giving the details of my chunking strategy from the Chunking Strategy section of planning.md. I expect it to produce a function or use a pre-built function that chunks the context using information in sources folder. I will verify the output by testing the function on a sample document and see if the output chunks are of the expected size and overlap as well as checking if I need to change the details of Chunking Strategy based on the output Claude Code provides.
 *
 
 **Milestone 4 — Embedding and retrieval:*
-     For Embedding and Retrieval, I will use Copilot to implement embedding using all-MiniLM-L6-v2 model via sentence-transformers, also giving it Retrieval Approach section of planning.md for Copilot to understand the details of embedding and retrieval and have an output closer to what I expect. I expect Copilot to produce a function that takes the chunks from the previous stage and use the model, I specified it to use for embedding and retrieval, to embed the vectors in ChromaDb effectively. I will verify the output by testing the function on a sample chunk and see if the output embedding is relevant to the input chunk and if the retrieval function works without any bugs or errors and retrieves the relevant chunks based on the sample chunk.
+     For Embedding and Retrieval, I will use Claude Code to implement embedding using all-MiniLM-L6-v2 model via sentence-transformers, also giving it Retrieval Approach section of planning.md for Claude Code to understand the details of embedding and retrieval and have an output closer to what I expect. I expect Claude Code to produce a function that takes the chunks from the previous stage and use the model, I specified it to use for embedding and retrieval, to embed the vectors in ChromaDb effectively. I will verify the output by testing the function on a sample chunk and see if the output embedding is relevant to the input chunk and if the retrieval function works without any bugs or errors and retrieves the relevant chunks based on the sample chunk.
 *
 
 **Milestone 5 — Generation and interface:*
-     For Generation, I will use Copilot to implement prompting the model, I provide by giving the Architecture section of planning.md, and generating an answer based on the retrieved chunks from previous stage. For Interface, I will use Copilot to implement a simple Gradio interface. I expect Copilot to create a clean, easy-to-use interface as well as a bugless function for generation. I will verify the output of generation by testing the function with the questions in Evaluation Plan section of planning.md and compare the results I get from the function with the expected answers. After comparing, I will decide if I need to change any detail of implementation in Ingestion, Chunking, Embedding, Retrieval or Generation stage to get a more accurate answer. 
+     For Generation, I will use Claude Code to implement prompting the model, I provide by giving the Architecture section of planning.md, and generating an answer based on the retrieved chunks from previous stage. For Interface, I will use Claude Code to implement a simple Gradio interface. I expect Claude Code to create a clean, easy-to-use interface as well as a bugless function for generation. I will verify the output of generation by testing the function with the questions in Evaluation Plan section of planning.md and compare the results I get from the function with the expected answers. After comparing, I will decide if I need to change any detail of implementation in Ingestion, Chunking, Embedding, Retrieval or Generation stage to get a more accurate answer. 
 *
