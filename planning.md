@@ -9,7 +9,7 @@
 
 ## Domain
 
-<!-- What domain did you choose? Why is this knowledge valuable and hard to find through official channels? -->
+I chose the domain of student reviews of dining halls at Stanford University. I chose this domain because Stanford has a large variety of dining halls with their own distinctive features. My system will help students find the dining hall that best suits their preferences and needs based on the reviews and general information provided in the sources that I gathered. Students will be able to ask questions and get answers in a short amount of time, without having to read through every review or piece of information, based on the sources provided to the LLM.  
 
 ---
 
@@ -20,16 +20,18 @@
 
 | # | Source | Description | URL or location |
 |---|--------|-------------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
+| 1 | Niche — Stanford Campus Life | Student poll results and ratings for Stanford campus life, including dining | https://www.niche.com/colleges/stanford-university/campus-life/ |
+| 2 | Reddit r/stanford — Taking food out the dining hall | Reddit thread discussing rules and experiences around taking food out of Stanford dining halls | https://www.reddit.com/r/stanford/comments/1sgzl6a/taking_food_out_the_dining_hall/ |
+| 3 | Reddit r/stanford — Dining Halls | Reddit thread with student opinions and comparisons of Stanford dining halls | https://www.reddit.com/r/stanford/comments/1mvw2p8/dining_halls/ |
+| 4 | Reddit r/stanford — Flo Mo dining discussion | Reddit thread debating whether FloMo is the best or worst dining hall at Stanford | https://www.reddit.com/r/stanford/comments/zwa937/a_couple_of_hours_ago_i_asked_if_flo_mo_was_the/ |
+| 5 | Spoon University — Stanford Dining Halls Definitive Ranking | Student-written ranking of all Stanford dining halls with descriptions and opinions | https://spoonuniversity.com/lifestyle/dining-halls-at-stanford-definitive-ranking/ |
+| 6 | The Stanford Daily — Students on Their Favorite Dining Halls | Stanford Daily article featuring student opinions on their favorite dining halls | https://stanforddaily.com/2022/01/09/stanford-students-on-their-favorite-dining-halls/ |
+| 7 | Stanford Official Dining & Hospitality | Official Stanford RDE page describing dining programs, hours, and offerings | https://rde.stanford.edu/dining-hospitality/welcome-stanford-dining-hospitality-auxiliaries |
+| 8 | Yelp — Arrillaga Family Dining Commons | Yelp reviews for Arrillaga Family Dining Commons at Stanford | https://www.yelp.com/biz/arrillaga-family-dining-commons-stanford-3 |
+| 9 | Yelp — Arrillaga Nights | Yelp reviews for Arrillaga Nights (late-night dining) at Stanford | https://www.yelp.com/biz/arrillaga-nights-stanford-3 |
+| 10 | Yelp — Stern Dining Hall | Yelp reviews for Stern Dining Hall at Stanford | https://www.yelp.com/biz/stern-dining-hall-stanford |
+| 11 | Yelp — Top 10 Stanford Dining Halls | Yelp search results listing and reviewing top dining halls at Stanford | https://www.yelp.com/search?find_desc=Dining+Hall&find_loc=Stanford%2C+CA+94305 |
+| 12 | Yelp — Wilbur Dining | Yelp reviews for Wilbur Dining at Stanford | https://m.yelp.com/biz/wilbur-dining-stanford |
 
 ---
 
