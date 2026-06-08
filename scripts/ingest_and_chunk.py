@@ -21,12 +21,16 @@ def load_documents(sources_dir):
             with open(filepath, "r", encoding="utf-8") as f:
                 text = f.read()
 
-            # Look for sibling _url.txt in same folder
+            # Look for the sibling *_url.txt in the same folder. The URL file
+            # uses a shorter base name than the content file (e.g.
+            # niche_stanford_url.txt vs niche_stanford_poll_results.txt), so we
+            # match by suffix within the directory rather than deriving the name.
             url = None
-            url_file = filepath.replace(".txt", "_url.txt")
-            if os.path.exists(url_file):
-                with open(url_file, "r", encoding="utf-8") as f:
-                    url = f.read().strip()
+            for sibling in files:
+                if sibling.endswith("_url.txt") and sibling != filename:
+                    with open(os.path.join(root, sibling), "r", encoding="utf-8") as f:
+                        url = f.read().strip()
+                    break
 
             if text.strip():
                 docs.append({

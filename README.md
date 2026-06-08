@@ -51,6 +51,32 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
 
 ---
 
+## Sample Chunks
+
+<!-- At least 5 labeled sample chunks, each with its source document name.
+     These are verbatim chunks produced by ingest_and_chunk.py. -->
+
+These are five verbatim chunks emitted by `ingest_and_chunk.py` (256-char window, 50-char overlap). Each is labeled with its chunk ID, which encodes the source document name and chunk index.
+
+**Chunk 1 — `niche_stanford_poll_results.txt::chunk0`**
+> Title: Niche - Stanford University Campus Life Polls Overall Rating: 4.0 Total Reviews: 154 Reviewer: Student Poll (Dining Facility Rating) Date: Updated recently Review: 80% of students highly rate the dining facilities. (Based on 108 responses) Reviewe
+
+**Chunk 2 — `reddit_stanford_dining_1_content.txt::chunk0`**
+> Title: Reddit - r/stanford (Thread: Taking food out the dining hall) Reviewer: ineedfundingpls Date: 2 months ago Review: Yes, you're allowed to take plates outside (since there's outdoor seating too), though you are expected to return the plates/cutlery.
+
+**Chunk 3 — `spoon_university_ranking.txt::chunk0`**
+> The Definitive Ranking of Stanford Dining Halls April 1, 2015 Spoon University It's 6 pm, you just came home from a full day of classes, finished a physics review session, and are on your way to orchestra practice. On top of all that, you're hungry. Where
+
+**Chunk 4 — `yelp_stern_reviews.txt::chunk0`**
+> Dining Hall Name: Stern Dining Hall Address: 618 Escondido Road, Stanford, CA 94305 Overall Rating: 3.3 Total Reviews: 7 Reviewer: Tamara M. Date: 2 years ago Review: Chipotle-style burrito bowls save an otherwise ho-hum dining hall. This reporter also lo
+
+**Chunk 5 — `yelp_wilbur_dining_reviews.txt::chunk0`**
+> Dining Hall Name: Wilbur Dining Address: 658 Escondido Rd, Stanford, CA 94305 Overall Rating: 2.7 Total Reviews: 9 Reviewer: Andrew A. Date: 3 months ago Review: Some old reviews. Food is good. Not sure why a review is allowed from 10 years ago. Just note
+
+> Note: chunks are truncated mid-sentence at the 256-character boundary by design — the 50-character overlap with the following chunk recovers the cut-off text so no content is lost across the boundary.
+
+---
+
 ## Embedding Model
 
 <!-- Name the embedding model you used and explain your choice.
@@ -62,6 +88,51 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
 **Model used:** `all-MiniLM-L6-v2` via `sentence-transformers`, stored in a local ChromaDB persistent vector store with cosine similarity.
 
 **Production tradeoff reflection:** The main tradeoff worth weighing for a real deployment would be multilingual support. Stanford's student body has substantial international diversity, and students may search in their first language or use transliterated food terms (e.g., "dal", "pho", "banh mi"). `all-MiniLM-L6-v2` is English-only and would fail to match cross-lingual queries. A model like `paraphrase-multilingual-MiniLM-L12-v2` or OpenAI's `text-embedding-3-small` (API-hosted) would handle this better, at the cost of slightly higher latency or per-query API costs. 
+
+---
+
+## Retrieval Test Results
+
+<!-- At least 3 queries, each showing the query and the top returned chunks.
+     For at least 2, explain why the returned chunks are relevant. -->
+
+The following are real top-5 retrievals from the ChromaDB store (`retrieve()` in `embed_and_retrieve.py`, cosine distance — **lower = more similar**). Chunk text is condensed to one line for readability; source and distance are shown verbatim.
+
+### Query 1 — "Which dining hall has the best Indian food?"
+
+| Rank | Source chunk | Distance | Snippet |
+|------|--------------|----------|---------|
+| 1 | `yelp_top10_stanford_dining_reviews.txt #chunk2` | 0.3436 | "...they consistently have **good indian food and vegetarian dishes** that actually taste seasoned..." |
+| 2 | `stanford_daily_dining_opinions.txt #chunk8` | 0.3713 | "...Stern is my favorite... Gerhard Casper... most amazing roasted vegetables..." |
+| 3 | `spoon_university_ranking.txt #chunk7` | 0.3724 | "...burrito bowls save an otherwise ho-hum dining hall... 6. Lakeside Dining..." |
+| 4 | `spoon_university_ranking.txt #chunk6` | 0.3732 | "...extensive vegan and vegetarian options, homemade soups... 5. Stern Dining..." |
+| 5 | `stanford_daily_dining_opinions.txt #chunk10` | 0.3811 | "...quality of the food at each of the dining halls is comparable..." |
+
+**Why these chunks are relevant:** Rank 1 is the single most on-target chunk for this query — it explicitly says a dining hall "consistently [has] good indian food and vegetarian dishes that actually taste seasoned," which directly matches the Indian-cuisine specifier. The embedding surfaced it at distance 0.3436 because "indian food" appears verbatim, the strongest possible signal. Ranks 2–5 are relevant but weaker: they are general "favorite dining hall" / "best options" passages that share the query's intent ("best ... food") without naming Indian cuisine, which is why they cluster just behind the literal match.
+
+### Query 2 — "Can I take food out of the dining hall?"
+
+| Rank | Source chunk | Distance | Snippet |
+|------|--------------|----------|---------|
+| 1 | `reddit_stanford_dining_1_content.txt #chunk0` | 0.3156 | "...you're allowed to take plates outside... expected to return the plates/cutlery..." |
+| 2 | `reddit_stanford_dining_1_content.txt #chunk10` | 0.3719 | "...staff might side-eye you... grabbing a few reusable containers... pack real meals..." |
+| 3 | `yelp_wilbur_dining_reviews.txt #chunk17` | 0.4233 | "...pay with cash or cardinal dollars... even for dining hall food it's not great..." |
+| 4 | `stanford_daily_dining_opinions.txt #chunk5` | 0.4244 | "...if I'm busy... I need a quick meal, I'll go to Arrillaga..." |
+| 5 | `spoon_university_ranking.txt #chunk4` | 0.4543 | "...grilled selections, and pizza every day... 3. Ricker Dining... Death by Chocolate Cake..." |
+
+**Why these chunks are relevant:** This is the strongest retrieval in the test set. Rank 1 sits at distance 0.3156 — closer than anything in Query 1 — because the chunk is literally the answer: plates can be taken outside but must be returned. Rank 2, from the same Reddit takeout thread, reinforces it with the informal workaround (students using their own reusable containers). Ranks 3–5 are off-topic intrusions — generic dining-hall passages that share the words "food" / "dining hall" but say nothing about taking food out, which is why they fall off sharply past distance 0.42.
+
+### Query 3 — "Which dining hall has the best vegetarian food?"
+
+| Rank | Source chunk | Distance | Snippet |
+|------|--------------|----------|---------|
+| 1 | `spoon_university_ranking.txt #chunk6` | 0.2971 | "...extensive **vegan and vegetarian options**, homemade soups... 5. Stern Dining..." |
+| 2 | `stanford_daily_dining_opinions.txt #chunk8` | 0.3355 | "...Gerhard Casper... most amazing **roasted vegetables**... best fish..." |
+| 3 | `stanford_daily_dining_opinions.txt #chunk10` | 0.3931 | "...quality of the food at each of the dining halls is comparable..." |
+| 4 | `yelp_arrillaga_reviews.txt #chunk30` | 0.3936 | "...so many options and I can always find some food I'll be happy with..." |
+| 5 | `yelp_stern_reviews.txt #chunk3` | 0.3961 | "...meat options are solid, and the guacamole is actually pretty good..." |
+
+**Why these chunks are relevant:** Rank 1 is the cleanest match in the entire test set (distance 0.2971) — it explicitly names a hall with "extensive vegan and vegetarian options," exactly the dietary specifier the query asks for. Rank 2 reinforces it with Gerhard Casper's "most amazing roasted vegetables." The drop from 0.3355 (rank 2) to 0.3931 (rank 3) marks the boundary where retrieval shifts from vegetable-specific endorsements to generic "good food" passages — the system found two strongly relevant chunks and then ran out of vegetarian-specific material in the corpus, which is the honest shape of this small review set.
 
 ---
 
@@ -77,6 +148,80 @@ Student reviews of dining halls at Stanford University. This knowledge is valuab
 **System prompt grounding instruction:** The system prompt explicitly instructs the model: `"ONLY use the retrieved context when answering questions."` It also includes: `"If the user asks you a question which is not related to Stanford dining halls or information about them, say 'Sorry, I can only answer questions related to Stanford dining halls.'"` This creates a two-layer guard — the model is told to stay within the retrieved context, and to reject queries that fall outside the domain entirely.
 
 **How source attribution is surfaced in the response:** The prompt instructs the model to end every answer with a bullet list of citations, each including the source filename and URL if available. The context itself is pre-formatted by `format_context()` in `generate_and_interface.py`, which prepends each chunk with a numbered header: `[N] Source: <filename> (<url>)`. This gives the model explicit, structured attribution labels to reference in its citations.
+
+---
+
+## Example Responses
+
+<!-- At least 2 responses with source attribution visible in the output text,
+     plus one out-of-scope query showing the refusal response. -->
+
+These are verbatim outputs from `generate()` in `generate_and_interface.py` (Groq `llama-3.3-70b-versatile` over the top-5 retrieved chunks). Source attribution is visible inline in every answer.
+
+### Example 1 — in-scope, with source attribution
+
+**Query:** "Which dining hall allows take outs?"
+
+> According to the context, it appears that taking food out of the dining hall is not officially allowed, but students have been able to do so without being stopped by using their own reusable containers. There is no specific dining hall mentioned that explicitly allows take outs. However, the context suggests that students have been able to take food out of the dining hall without issue, as long as they use their own containers.
+>
+> * Source: reddit_stanford_dining_1_content.txt (https://www.reddit.com/r/stanford/comments/1sgzl6a/taking_food_out_the_dining_hall/)
+> * Source: spoon_university_ranking.txt (https://spoonuniversity.com/lifestyle/dining-halls-at-stanford-definitive-ranking/)
+> * Source: stanford_daily_dining_opinions.txt (https://stanforddaily.com/2022/01/09/stanford-students-on-their-favorite-dining-halls/)
+
+### Example 2 — in-scope, with source attribution
+
+**Query:** "Which dining hall has the best vegetarian food?"
+
+> According to the retrieved context, Branner dining hall has extensive vegan and vegetarian options, homemade soups, and consistently good food five nights a week, making it a go-to dining hall. Additionally, Gerhard Casper Dining Commons is mentioned as having the "most amazing roasted vegetables". However, based on the available information, it seems that Branner might have a wider range of vegetarian options.
+>
+> * Source: spoon_university_ranking.txt (https://spoonuniversity.com/lifestyle/dining-halls-at-stanford-definitive-ranking/)
+> * Source: stanford_daily_dining_opinions.txt (https://stanforddaily.com/2022/01/09/stanford-students-on-their-favorite-dining-halls/)
+
+### Example 3 — out-of-scope query (refusal)
+
+**Query:** "What time does the campus library close?"
+
+> Sorry, I can only answer questions related to Stanford dining halls.
+>
+> * No citations
+
+The off-topic guard in the system prompt fires correctly here: the query has nothing to do with dining, no retrieved chunk supports an answer, and the model returns the exact refusal string instead of speculating.
+
+---
+
+## Query Interface
+
+<!-- Describe the input and output fields, plus a sample interaction transcript
+     showing one complete query and response. -->
+
+The interface is a Gradio `ChatInterface` (`build_interface()` in `generate_and_interface.py`), launched with `python scripts/generate_and_interface.py`.
+
+**Input field:** a single free-text textbox (placeholder *"Ask about Stanford dining halls..."*) where the user types one natural-language question. Three example questions are shown as clickable chips. Each question is answered fresh from freshly-retrieved context — prior chat history is intentionally **not** fed back into the model (see `chat_fn`), so every answer is grounded only in the chunks retrieved for the current question.
+
+**Output field:** a chat bubble containing the model's response. The response always has two parts, enforced by the system prompt: (1) the answer grounded in retrieved context, and (2) a bullet-list of citations naming the source document (and URL when available), or the literal string "No citations".
+
+**Processing pipeline per query:** user question → `retrieve()` embeds the query with `all-MiniLM-L6-v2` and pulls the top-5 nearest chunks from ChromaDB → `format_context()` numbers and labels each chunk with its source → the labeled context plus the question are sent to Groq `llama-3.3-70b-versatile` under the grounding system prompt → the answer is rendered in the chat window.
+
+**Sample interaction transcript:**
+
+```
+User:  Which dining hall allows take outs?
+
+Guide: According to the context, it appears that taking food out of the
+       dining hall is not officially allowed, but students have been able to
+       do so without being stopped by using their own reusable containers.
+       There is no specific dining hall mentioned that explicitly allows take
+       outs. However, the context suggests that students have been able to
+       take food out of the dining hall without issue, as long as they use
+       their own containers.
+
+       * Source: reddit_stanford_dining_1_content.txt
+         (https://www.reddit.com/r/stanford/comments/1sgzl6a/taking_food_out_the_dining_hall/)
+       * Source: spoon_university_ranking.txt
+         (https://spoonuniversity.com/lifestyle/dining-halls-at-stanford-definitive-ranking/)
+       * Source: stanford_daily_dining_opinions.txt
+         (https://stanforddaily.com/2022/01/09/stanford-students-on-their-favorite-dining-halls/)
+```
 
 ---
 
